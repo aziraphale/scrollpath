@@ -3,13 +3,31 @@ $(document).ready(init);
 function init() {
 	/* ========== DRAWING THE PATH AND INITIATING THE PLUGIN ============= */
 
-	$.fn.scrollPath("getPath")
-		// Move to 'start' element
-		.moveTo(400, 50, {name: "start"})
+	var settings = {
+	    drawPath: true, 
+	    wrapAround: true, 
+	    logSvg:true,                  // output SVG path to console to draw a PNG later (copy from console to *.svg file!) process SVG in inkcape or such
+	    autoJoinArcWithLineTo: false,
+	    useDegrees: false,             // set to true to use start and end angle in degrees instead radians
+        floorCoordinates:false         // turn off antialias on canvas, improve speed
+	};
+	
+	// we must pass the plugin settings to the Path constructor AND the plugin
+	// to make useDegrees and logSvg work as Path is initialized before the plugin
+	var path = $.fn.scrollPath("getPath",{},settings);
+	// current end coordinate: path.x, path.y
+	
+	// Move to 'start' element
+	path.moveTo(400, 50, {name: "start"})
 		// Line to 'description' element
-		.lineTo(400, 800, {name: "description"})
+		.lineTo(path.x, path.y+750, {name: "description"})
+		.bezierCurveTo( 
+		    path.x+200, path.y,
+		    path.x+200, path.y+200,
+		    path.x, path.y+800)
 		// Arc down and line to 'syntax'
-		.arc(200, 1200, 400, -Math.PI/2, Math.PI/2, true)
+		//.arc(200, 1200, 400, -Math.PI/2, Math.PI/2, true)
+		// NEW OPTION: .lineTo(path.arcEndPointX+100,path.arcEndPointY+100, ...)
 		.lineTo(600, 1600, {
 			callback: function() {
 				highlight($(".settings"));
@@ -25,6 +43,7 @@ function init() {
 		})
 		// Arc up while rotating
 		.arc(1800, 1000, 600, Math.PI/2, 0, true, {rotate: Math.PI/2 })
+		// NEW OPTION: .lineTo(path.arcEndPointX+100,path.arcEndPointY+100, ...)
 		// Line to 'rotations'
 		.lineTo(2400, 750, {
 			name: "rotations"
@@ -46,9 +65,10 @@ function init() {
 		})
 		// Arc and rotate back to the beginning.
 		.arc(1300, 50, 900, -Math.PI/2, -Math.PI, true, {rotate: Math.PI*2, name: "end"});
-
+		
+		
 	// We're done with the path, let's initate the plugin on our wrapper element
-	$(".wrapper").scrollPath({drawPath: true, wrapAround: true});
+	$(".wrapper").scrollPath(settings);
 
 	// Add scrollTo on click on the navigation anchors
 	$("nav").find("a").each(function() {
